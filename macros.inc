@@ -1,0 +1,19 @@
+NormalPusha MACRO
+	PUSH AX
+	PUSH bx
+	PUSH cx
+	PUSH dx
+	PUSH si
+	PUSH DI
+	PUSHF
+ENDM
+
+NormalPopa MACRO
+	POPF
+	POP DI
+	POP si
+	POP DX
+	POP cx
+	POP bx
+	POP AX
+ENDM

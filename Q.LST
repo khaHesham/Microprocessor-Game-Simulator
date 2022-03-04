@@ -1,0 +1,919 @@
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-1
+
+
+				public Control_Power_Up 
+				 
+				extrn Regs_player1:BYTE 
+				extrn Regs_player2:BYTE 
+				extrn Execute_To:BYTE 
+				extrn stuck:BYTE 
+				extrn line:BYTE 
+				extrn OneOrZero:BYTE 
+				extrn P1Points:WORD 
+				extrn P2Points:WORD 
+				extrn levelIndicator:BYTE 
+				extrn turn:BYTE 
+				extrn Target_Value:WORD 
+				extrn forbidden2:BYTE 
+				extrn forbidden1:BYTE 
+				extrn ASC_TBL:BYTE 
+				extrn Changed1:BYTE 
+				extrn Changed2:BYTE 
+				extrn winning:BYTE 
+				extrn SEND_CHAR:far 
+				extrn CHAR_TO_SEND:BYTE 
+				extrn RECEIVE_CHAR:far 
+				extrn RECEIVED_CHAR:BYTE 
+				extrn notification:far 
+				 
+				extrn intitialization:far 
+				 
+				getnum macro ; to read the number digit by digi
+				t 
+				    mov ah , 7  ; read char  
+				    int 21h     
+				endm getnum   
+				 
+				readThirddigit macro lin                    
+				    mov ah , 0 
+				    sub al , 30h ; convert the char to int  
+				    mov bx , 10d 
+				    mul bx       ; multiply the first digit by 
+				10  
+				    add lin , al ; add to a 
+				 
+				endm readThirddigit 
+				 
+				read4thdigit macro lin                    
+				    mov ah , 0 
+				    sub al , 30h ; convert the char to int  
+				    mov bx , 1d 
+				    mul bx       
+				    add lin , al ;add to a 
+				 
+				endm read4thdigit 
+				 
+				NormalPusha MACRO 
+					PUSH AX 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-2
+
+
+					PUSH bx 
+					PUSH cx 
+					PUSH dx 
+					PUSH si 
+					PUSH DI 
+					PUSHF 
+				ENDM 
+				 
+				NormalPopa MACRO 
+					POPF 
+					POP DI 
+					POP si 
+					POP DX 
+					POP cx 
+					POP bx 
+					POP AX 
+				ENDM 
+				 
+				 
+				.model large  
+ 0040				.stack 64 
+				 
+ 0000				.data 
+				 
+ 0000  ??				deduce_p1       db ? 
+ 0001  ??				deduce_p2       db ? 
+ 0002  21 21 21 24			mess db '!!!$' 
+					;;;;;;;;;;;;;;;;;  Change Forbidden 
+					;Message         db 'Enter The New Char
+				: $' 
+ 0006  05  ??				NewTargetString db 5,?,5 dup('$') 
+       0005[			
+	   24			
+			 ]	
+				
+				 
+ 0000				.code 
+ 0000				ClearingAllReg1 proc far 
+					NormalPusha    
+ 0000  50                    1		PUSH AX 
+ 0001  53                    1		PUSH bx 
+ 0002  51                    1		PUSH cx 
+ 0003  52                    1		PUSH dx 
+ 0004  56                    1		PUSH si 
+ 0005  57                    1		PUSH DI 
+ 0006  9C                    1		PUSHF 
+ 0007  B9 0000				mov  cx,0 
+ 000A  BE 0000 E			mov  si,offset Regs_player1 
+ 000D  BF 0000 E			mov  di,offset Regs_player2 
+ 0010					ClearingRegs1Loop: 
+ 0010  B0 00					mov al, 0 
+ 0012  88 04					mov  [si], al 
+ 0014  88 05					mov  [di], al 
+ 0016  46					inc  si 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-3
+
+
+ 0017  47					inc  di 
+ 0018  41					inc  cx 
+ 0019  83 F9 18					cmp  cx,24 
+ 001C  75 F2				jnz  ClearingRegs1Loop 
+					 
+ 001E  9A 0000 ---- E			call intitialization 
+					NormalPopa 
+ 0023  9D                    1		POPF 
+ 0024  5F                    1		POP DI 
+ 0025  5E                    1		POP si 
+ 0026  5A                    1		POP DX 
+ 0027  59                    1		POP cx 
+ 0028  5B                    1		POP bx 
+ 0029  58                    1		POP AX 
+ 002A  CB				ret 
+ 002B				ClearingAllReg1 endp 
+				 
+ 002B				ChangeForbidden1 proc far 
+					NormalPusha         
+ 002B  50                    1		PUSH AX 
+ 002C  53                    1		PUSH bx 
+ 002D  51                    1		PUSH cx 
+ 002E  52                    1		PUSH dx 
+ 002F  56                    1		PUSH si 
+ 0030  57                    1		PUSH DI 
+ 0031  9C                    1		PUSHF 
+ 0032  80 3E 0000 E 01			cmp changed1 , 1 
+ 0037  74 14				jz hahah 
+					;reading the char without enter 
+ 0039  B4 07				                    mov  ah , 7 
+ 003B  CD 21				                    int  21h 
+ 003D  A2 0000 E			                    mov  forbidden2 , a
+				l 
+ 0040  A2 0000 E							
+					mov CHAR_TO_SEND , al 
+ 0043  9A 0000 ---- E							
+					call SEND_CHAR 
+ 0048  C6 06 0000 E 01							
+					mov changed1 , 1 
+					;We Should Push All here 
+ 004D					hahah: 
+					NormalPopa 
+ 004D  9D                    1		POPF 
+ 004E  5F                    1		POP DI 
+ 004F  5E                    1		POP si 
+ 0050  5A                    1		POP DX 
+ 0051  59                    1		POP cx 
+ 0052  5B                    1		POP bx 
+ 0053  58                    1		POP AX 
+				 
+ 0054  CB				                    ret 
+ 0055				ChangeForbidden1 endp 
+				 
+ 0055				ChangeForbidden2 proc far 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-4
+
+
+					NormalPusha           
+ 0055  50                    1		PUSH AX 
+ 0056  53                    1		PUSH bx 
+ 0057  51                    1		PUSH cx 
+ 0058  52                    1		PUSH dx 
+ 0059  56                    1		PUSH si 
+ 005A  57                    1		PUSH DI 
+ 005B  9C                    1		PUSHF 
+ 005C  80 3E 0000 E 01			cmp changed2 , 1 
+ 0061  74 10				jz hxhxhx                         
+					;reading the char without enter 
+					                    ; mov  ah , 7 
+					                    ; int  21h 
+ 0063  9A 0000 ---- E							
+					call RECEIVE_CHAR 
+ 0068  A0 0000 E							
+					mov al , RECEIVED_CHAR 
+ 006B  A2 0000 E			                    mov  forbidden1 , a
+				l 
+ 006E  C6 06 0000 E 01							
+					mov changed2 , 1 
+					;We Should Push All here 
+ 0073					hxhxhx: 
+					NormalPopa 
+ 0073  9D                    1		POPF 
+ 0074  5F                    1		POP DI 
+ 0075  5E                    1		POP si 
+ 0076  5A                    1		POP DX 
+ 0077  59                    1		POP cx 
+ 0078  5B                    1		POP bx 
+ 0079  58                    1		POP AX 
+ 007A  CB				ret 
+				 
+ 007B				ChangeForbidden2 endp 
+				         
+ 007B				Execute_on_your_own proc 
+					NormalPusha 
+ 007B  50                    1		PUSH AX 
+ 007C  53                    1		PUSH bx 
+ 007D  51                    1		PUSH cx 
+ 007E  52                    1		PUSH dx 
+ 007F  56                    1		PUSH si 
+ 0080  57                    1		PUSH DI 
+ 0081  9C                    1		PUSHF 
+ 0082  A0 0000 E			                    mov  al,Execute_To 
+ 0085  3C 00				                    cmp  al,0 
+ 0087  74 03				                    jz   l_1 
+ 0089  EB 06 90				                    jmp  l_2 
+ 008C  B0 01				l_1:                mov  al,1 
+ 008E  EB 03 90				                    jmp  _exit_ 
+ 0091  B0 00				l_2:                mov  al,0 
+ 0093					_exit_:              
+ 0093  A2 0000 E			                    mov  Execute_To,al 
+									
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-5
+
+
+					NormalPopa 
+ 0096  9D                    1		POPF 
+ 0097  5F                    1		POP DI 
+ 0098  5E                    1		POP si 
+ 0099  5A                    1		POP DX 
+ 009A  59                    1		POP cx 
+ 009B  5B                    1		POP bx 
+ 009C  58                    1		POP AX 
+ 009D  CB				                    ret 
+ 009E				Execute_on_your_own endp 
+				 
+ 009E				check_numeric proc ;si contains offset of the s
+				tring 
+ 009E  B9 0004			    mov cx, 4 
+ 00A1  BD 0000			    mov bp, 0 
+ 00A4				    char: 
+ 00A4  8A F9			        mov bh, cl 
+				 
+ 00A6  49			        dec cx 
+ 00A7  B0 04			        mov al, 4 
+ 00A9  F7 E1			        mul cx 
+ 00AB  8A D8			        mov bl, al 
+				 
+ 00AD  AC			        lodsb 
+ 00AE  BF 0000 E		        mov di, offset ASC_TBL 
+ 00B1  B9 0011			        mov cx, 17 
+ 00B4  F2/ AE			        repne scasb 
+ 00B6  83 F9 00			        cmp cx, 0 
+ 00B9  74 11			        jz invnum 
+ 00BB  B0 10			        mov al, 16 
+ 00BD  2A C1			        sub al, cl 
+				         
+ 00BF  B4 00			        mov ah, 0 
+ 00C1  8A CB			        mov cl, bl 
+ 00C3  D3 E0			        shl ax, cl 
+ 00C5  03 E8			        add bp, ax 
+				 
+ 00C7  8A CF			        mov cl, bh 
+ 00C9  E2 D9			    loop char 
+				    ; mov Target_Value, bp 
+ 00CB  CB			    ret 
+				 
+ 00CC				    invnum: 
+ 00CC  BD FFFF				mov bp, -1 
+ 00CF  CB			    ret 
+ 00D0				check_numeric ENDP 
+				 
+ 00D0				Change_Target_Value proc 
+				NormalPusha 
+ 00D0  50                    1		PUSH AX 
+ 00D1  53                    1		PUSH bx 
+ 00D2  51                    1		PUSH cx 
+ 00D3  52                    1		PUSH dx 
+ 00D4  56                    1		PUSH si 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-6
+
+
+ 00D5  57                    1		PUSH DI 
+ 00D6  9C                    1		PUSHF 
+ 00D7  B4 0A				mov ah, 0AH 
+ 00D9  BA 0006 R			mov dx, offset NewTargetString 
+ 00DC  CD 21				int 21H 
+				 
+ 00DE  8B F2				mov si, dx 
+ 00E0  9A 009E ---- R			call check_numeric 
+ 00E5  83 FD FF				cmp bp, -1 
+ 00E8  74 35				jz exists 
+				 
+ 00EA  BB 0000				mov  bx,0 
+ 00ED  BE 0000 E			mov  si,offset Regs_player2 
+ 00F0					Mloop:               
+					;add si,bx 
+ 00F0  8A A7 0000 E				mov  ah,Regs_player2[bx] 
+ 00F4  8A 87 0001 E				mov  al, Regs_player2[bx+1] 
+ 00F8  3B C5					cmp  ax, bp 
+ 00FA  74 23					jz   exists 
+ 00FC  83 C3 02					add bx, 2 
+ 00FF  83 FB 28					cmp  bx,40 
+ 0102  75 EC				jnz  Mloop 
+ 0104  BB 0000				mov  bx,0 
+ 0107					Lloop:               
+ 0107  8A A7 0000 E				mov  ah,Regs_player1[bx] 
+ 010B  8A 87 0001 E				mov  al, Regs_player1[bx+1] 
+ 010F  3B C5					cmp  ax,bp 
+ 0111  74 0C					jz   exists 
+ 0113  83 C3 02					add bx, 2 
+ 0116  83 FB 28					cmp  bx,40 
+ 0119  75 EC				jnz  Lloop 
+				 
+ 011B  89 2E 0000 E			mov Target_Value,bp 
+ 011F					exists:   
+					NormalPopa 
+ 011F  9D                    1		POPF 
+ 0120  5F                    1		POP DI 
+ 0121  5E                    1		POP si 
+ 0122  5A                    1		POP DX 
+ 0123  59                    1		POP cx 
+ 0124  5B                    1		POP bx 
+ 0125  58                    1		POP AX 
+ 0126  CB				ret 
+ 0127				Change_Target_Value endp 
+				     
+ 0127				Control_Power_Up proc  far 
+ 0127  B4 07			        mov ah,07 
+ 0129  CD 21			        int 21h 
+					NormalPusha 
+ 012B  50                    1		PUSH AX 
+ 012C  53                    1		PUSH bx 
+ 012D  51                    1		PUSH cx 
+ 012E  52                    1		PUSH dx 
+ 012F  56                    1		PUSH si 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-7
+
+
+ 0130  57                    1		PUSH DI 
+ 0131  9C                    1		PUSHF 
+ 0132  B4 07				                    mov            ah ,
+				 7 
+ 0134  CD 21				                    int            21h 
+ 0136  2C 30				                    sub            al ,
+				 30h 
+ 0138  80 3E 0000 E 00			                    cmp            turn
+				 , 0              	; check that this is p1
+				 turn 
+ 013D  74 03				                    jz             Play
+				1 
+ 013F  E9 0239 R			                    jmp            Play
+				2 
+				  
+ 0142					Play1:               
+ 0142  A2 0000 E				mov CHAR_TO_SEND, al 
+ 0145  9A 0000 ---- E				call SEND_CHAR 
+ 014A  3C 01				                    cmp            al ,
+				 1 
+ 014C  74 23				                    jz             p1 
+ 014E  3C 02				                    cmp            al ,
+				 2 
+ 0150  74 36				                    jz             p2 
+ 0152  3C 03				                    cmp            al ,
+				 3 
+ 0154  74 49				                    jz             p3 
+ 0156  3C 04				                    cmp            al ,
+				 4 
+ 0158  75 03				                    jnz            xx 
+ 015A  E9 0203 R			                    jmp            p4 
+ 015D					xx:                  
+ 015D  3C 05				                    cmp            al ,
+				 5 
+ 015F  74 03				                    jz             here
+				 
+ 0161  E9 0333 R			                    jmp            exit
+				 
+					                     
+					                     
+ 0164					here:                                  
+				                  	; lw das 5 lazm ashof h
+				owa lvl 1 wla lvl 2 lw lvl 2 hshtghl 
+ 0164  80 3E 0000 E 01			                    cmp            leve
+				lIndicator , 1 
+ 0169  75 03				                    jnz            here
+				2 
+ 016B  E9 0333 R			                    jmp            exit
+				 
+ 016E					here2:               
+ 016E  E9 021A R			                    jmp            p5 
+				  
+				  
+				  
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-8
+
+
+ 0171					p1:                  
+					; check that the player has enough poin
+				ts 
+					; ;clear buffer 
+					; mov ah, 7 
+					; int 21h 
+ 0171  83 3E 0000 E 08			                    cmp            P1Po
+				ints , 8d 
+ 0176  77 03				                    ja             here
+				3 
+ 0178  E9 0231 R			                    jmp            lost
+				                  	; if less than 9 dont a
+				llow 
+ 017B					here3:               
+ 017B  9A 002B ---- R			                    call           chan
+				geForbidden1 
+ 0180  83 2E 0000 E 08			                    sub            P1Po
+				ints , 8d 
+ 0185  E9 0333 R			                    jmp            exit
+				 
+				  
+ 0188					p2:                  
+ 0188  83 3E 0000 E 05			                    cmp            P1Po
+				ints , 5d 
+ 018D  77 03				                    ja             here
+				4 
+ 018F  E9 0231 R			                    jmp            lost
+				                  	; if less than 6 dont a
+				llow 
+ 0192					here4:               
+ 0192  9A 007B ---- R			                    call           Exec
+				ute_on_your_own 
+ 0197  83 2E 0000 E 05			                    sub            P1Po
+				ints , 5d 
+ 019C  E9 0333 R			                    jmp            exit
+				 
+				  
+ 019F					p3:                  
+ 019F  83 3E 0000 E 02			                    cmp            P1Po
+				ints , 2d 
+ 01A4  77 03				                    ja             con2
+				 
+ 01A6  E9 0231 R			                    jmp            lost
+				 
+					 
+ 01A9					con2:                
+					;read line 
+					                    getnum 
+ 01A9  B4 07                 1	    mov ah , 7  ; read char 
+ 01AB  CD 21                 1	    int 21h 
+					                    readThirdDigit line
+				 
+ 01AD  B4 00                 1	    mov ah , 0 
+ 01AF  2C 30                 1	    sub al , 30h ; convert the char to int 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-9
+
+
+ 01B1  BB 000A               1	    mov bx , 10d 
+ 01B4  F7 E3                 1	    mul bx       ; multiply the first digit by 
+				10 
+ 01B6  00 06 0000 E          1	    add line , al ; add to a 
+					                    getnum 
+ 01BA  B4 07                 1	    mov ah , 7  ; read char 
+ 01BC  CD 21                 1	    int 21h 
+					                    read4thDigit   line
+				 
+ 01BE  B4 00                 1	    mov ah , 0 
+ 01C0  2C 30                 1	    sub al , 30h ; convert the char to int 
+ 01C2  BB 0001               1	    mov bx , 1d 
+ 01C5  F7 E3                 1	    mul bx 
+ 01C7  00 06 0000 E          1	    add line , al ;add to a 
+ 01CB  80 3E 0000 E 10			                    cmp            line
+				 , 16d            	;lw el rkm akbur mn 16 
+				yeb2a el user 3bet 
+ 01D0  72 03				                    jb             con3
+				 
+ 01D2  E9 0333 R			                    jmp            exit
+				 
+ 01D5					con3:                
+					;read one or zero 
+					                    getnum 
+ 01D5  B4 07                 1	    mov ah , 7  ; read char 
+ 01D7  CD 21                 1	    int 21h 
+					                    read4thDigit   OneO
+				rZero 
+ 01D9  B4 00                 1	    mov ah , 0 
+ 01DB  2C 30                 1	    sub al , 30h ; convert the char to int 
+ 01DD  BB 0001               1	    mov bx , 1d 
+ 01E0  F7 E3                 1	    mul bx 
+ 01E2  00 06 0000 E          1	    add OneOrZero , al ;add to a 
+					;check valid input 
+ 01E6  80 3E 0000 E 02			                    cmp            OneO
+				rZero ,02h        	; lw akbur ml 1 yeb2a e
+				l user byhzr 
+ 01EB  72 03				                    jb             cont
+				3 
+ 01ED  EB 42 90				                    jmp            lost
+				 
+ 01F0					cont3:               
+ 01F0  8A 1E 0000 E							
+					mov bl , turn  
+ 01F4  80 F3 01								
+					xor bl , 1 
+ 01F7  88 1E 0000 E			                    mov            Stuc
+				k ,bl 
+ 01FB  83 2E 0000 E 02			                    sub            P1Po
+				ints , 2d 
+ 0200  E9 0333 R			                    jmp            exit
+				 
+				  
+ 0203					p4:                  
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-10
+
+
+ 0203  83 3E 0000 E 1E			                    cmp            P1Po
+				ints , 1eh 
+ 0208  77 03				                    ja             here
+				5 
+ 020A  EB 25 90				                    jmp            lost
+				                  	; if less than 1f dont 
+				allow 
+ 020D					here5:               
+ 020D  9A 0000 ---- R			                    call           Clea
+				ringAllReg1 
+ 0212  83 2E 0000 E 1E			                    sub            P1Po
+				ints , 1eh 
+ 0217  E9 0333 R			                    jmp            exit
+				 
+				    
+				    
+ 021A					p5:                  
+ 021A  83 3E 0000 E 02			                    cmp            P1Po
+				ints , 02d 
+ 021F  77 03				                    ja             here
+				6 
+ 0221  EB 0E 90				                    jmp            lost
+				                  	; if less than 9 dont a
+				llow 
+ 0224					here6:               
+ 0224  9A 00D0 ---- R			                    call           Chan
+				ge_Target_Value 
+ 0229  83 2E 0000 E 02			                    sub            P1Po
+				ints , 02d 
+ 022E  E9 0333 R			                    jmp            exit
+				 
+				  
+				         
+ 0231					lost:                
+ 0231  C6 06 0000 E 02			                    mov            winn
+				ing	, 2 
+ 0236  E9 0333 R			                    jmp            exit
+				 
+					;; applying powerUp to P2 
+					;determine the powerUp to be used 
+ 0239					Play2:               
+ 0239  9A 0000 ---- E				call RECEIVE_CHAR 
+ 023E  A0 0000 E				mov al, RECEIVED_CHAR  
+ 0241  3C 04					cmp al , 4 
+ 0243  75 08					jnz lkl 
+ 0245  BA 0002 R				mov dx , offset mess 
+ 0248  9A 0000 ---- E				call notification 
+ 024D						lkl: 
+ 024D  3C 01				                    cmp            al ,
+				 1 
+ 024F  74 23				                    jz             p11 
+ 0251  3C 02				                    cmp            al ,
+				 2 
+ 0253  74 36				                    jz             p22 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-11
+
+
+ 0255  3C 03				                    cmp            al ,
+				 3 
+ 0257  74 49				                    jz             p33 
+ 0259  3C 04				                    cmp            al ,
+				 4 
+ 025B  75 03				                    jnz            xxx 
+ 025D  E9 0306 R			                    jmp            p44 
+ 0260					xxx:                 
+ 0260  3C 05				                    cmp            al ,
+				 5 
+ 0262  74 03				                    jz             here
+				7 
+ 0264  E9 0333 R			                    jmp            exit
+				 
+ 0267					here7:                                 
+				                  	; lw das 5 lazm ashof h
+				owa lvl 1 wla lvl 2 lw lvl 2 hshtghl 
+ 0267  80 3E 0000 E 01			                    cmp            leve
+				lIndicator , 1 
+ 026C  74 03				                    jz             xxxx
+				 
+ 026E  E9 031A R			                    jmp            p55 
+ 0271					xxxx:                
+ 0271  E9 0333 R			                    jmp            exit
+				 
+				  
+				  
+ 0274					p11:                 
+					; check that the player has enough poin
+				ts 
+					;clear buffer 
+					; mov ah, 7 
+					; int 21h 
+ 0274  83 3E 0000 E 08			                    cmp            P2Po
+				ints , 8d 
+ 0279  77 03				                    ja             here
+				8 
+ 027B  E9 032E R			                    jmp            lost
+				2                 	; if less than 9 dont a
+				llow 
+ 027E					here8:               
+ 027E  9A 0055 ---- R			                    call           chan
+				geForbidden2 
+ 0283  83 2E 0000 E 08			                    sub            P2Po
+				ints , 8d 
+ 0288  E9 0333 R			                    jmp            exit
+				 
+				  
+ 028B					p22:                 
+ 028B  83 3E 0000 E 05			                    cmp            P2Po
+				ints , 5d 
+ 0290  77 03				                    ja             xxxx
+				x 
+ 0292  E9 032E R			                    jmp            lost
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-12
+
+
+				2 
+ 0295					xxxxx:               
+ 0295  9A 007B ---- R			                    call           Exec
+				ute_on_your_own 
+ 029A  83 2E 0000 E 05			                    sub            P2Po
+				ints , 5d 
+ 029F  E9 0333 R			                    jmp            exit
+				 
+				  
+				  
+ 02A2					p33:                 
+ 02A2  83 3E 0000 E 02			                    cmp            P2Po
+				ints , 2d 
+ 02A7  77 03				                    ja             con2
+				2 
+ 02A9  E9 032E R			                    jmp            lost
+				2 
+ 02AC					con22:               
+					;read line 
+					                    getnum 
+ 02AC  B4 07                 1	    mov ah , 7  ; read char 
+ 02AE  CD 21                 1	    int 21h 
+					                    readThirdDigit line
+				 
+ 02B0  B4 00                 1	    mov ah , 0 
+ 02B2  2C 30                 1	    sub al , 30h ; convert the char to int 
+ 02B4  BB 000A               1	    mov bx , 10d 
+ 02B7  F7 E3                 1	    mul bx       ; multiply the first digit by 
+				10 
+ 02B9  00 06 0000 E          1	    add line , al ; add to a 
+					                    getnum 
+ 02BD  B4 07                 1	    mov ah , 7  ; read char 
+ 02BF  CD 21                 1	    int 21h 
+					                    read4thDigit   line
+				 
+ 02C1  B4 00                 1	    mov ah , 0 
+ 02C3  2C 30                 1	    sub al , 30h ; convert the char to int 
+ 02C5  BB 0001               1	    mov bx , 1d 
+ 02C8  F7 E3                 1	    mul bx 
+ 02CA  00 06 0000 E          1	    add line , al ;add to a 
+ 02CE  80 3E 0000 E 10			                    cmp            line
+				 , 16d            	;lw el rkm akbur mn 16 
+				yeb2a el user 3bet 
+ 02D3  72 03				                    jb             con3
+				3 
+ 02D5  EB 5C 90				                    jmp            exit
+				 
+ 02D8					con33:               
+					;read one or zero 
+					                    getnum 
+ 02D8  B4 07                 1	    mov ah , 7  ; read char 
+ 02DA  CD 21                 1	    int 21h 
+					                    read4thDigit   OneO
+				rZero 
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-13
+
+
+ 02DC  B4 00                 1	    mov ah , 0 
+ 02DE  2C 30                 1	    sub al , 30h ; convert the char to int 
+ 02E0  BB 0001               1	    mov bx , 1d 
+ 02E3  F7 E3                 1	    mul bx 
+ 02E5  00 06 0000 E          1	    add OneOrZero , al ;add to a 
+					;check valid input 
+ 02E9  80 3E 0000 E 02			                    cmp            OneO
+				rZero ,02h        	; lw akbur ml 1 yeb2a e
+				l user byhzr 
+ 02EE  72 03				                    jb             cont
+				44 
+ 02F0  EB 41 90				                    jmp            exit
+				 
+ 02F3					cont44:              
+ 02F3  8A 1E 0000 E			                   	mov bl , turn  
+ 02F7  80 F3 01								
+					xor bl , 1 
+ 02FA  88 1E 0000 E			                    mov            Stuc
+				k ,bl 
+ 02FE  83 2E 0000 E 02			                    sub            P2Po
+				ints , 2d 
+ 0303  EB 2E 90				                    jmp            exit
+				 
+ 0306					p44:                 
+ 0306  83 3E 0000 E 1E			                    cmp            P2Po
+				ints , 1eh 
+ 030B  72 21				                    jb             lost
+				2 
+ 030D  9A 0000 ---- R			                    call           Clea
+				ringAllReg1 
+ 0312  83 2E 0000 E 1E			                    sub            P2Po
+				ints , 1eh 
+ 0317  EB 1A 90								
+					jmp            exit 
+				    
+				    
+ 031A					p55:                 
+ 031A  83 3E 0000 E 02			                    cmp            P2Po
+				ints , 02d 
+ 031F  72 0D				                    jb             lost
+				2                 	; if less than 31 dont 
+				allow 
+ 0321  9A 00D0 ---- R			                    call           Chan
+				ge_Target_Value 
+ 0326  83 2E 0000 E 02			                    sub            P2Po
+				ints , 02d 
+ 032B  EB 06 90				                    jmp            exit
+				 
+				    
+ 032E					lost2:               
+ 032E  C6 06 0000 E 01			                    mov            winn
+				ing , 1 
+ 0333					exit: 
+					NormalPopa               
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Page     1-14
+
+
+ 0333  9D                    1		POPF 
+ 0334  5F                    1		POP DI 
+ 0335  5E                    1		POP si 
+ 0336  5A                    1		POP DX 
+ 0337  59                    1		POP cx 
+ 0338  5B                    1		POP bx 
+ 0339  58                    1		POP AX 
+ 033A  CB				ret 
+ 033B				Control_Power_Up endp  
+				 
+ 033B				main proc far 
+				 
+ 033B				main endp 
+ 033B				end main 
+
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Symbols-1
+
+
+Macros:
+
+		N a m e			Lines
+
+GETNUM . . . . . . . . . . . . .  	   2
+NORMALPOPA . . . . . . . . . . .  	   7
+NORMALPUSHA  . . . . . . . . . .  	   7
+READ4THDIGIT . . . . . . . . . .  	   5
+READTHIRDDIGIT . . . . . . . . .  	   5
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+CP_TEXT  . . . . . . . . . . . .  	033B	WORD	PUBLIC	'CODE'
+DGROUP . . . . . . . . . . . . .  	GROUP
+  _DATA  . . . . . . . . . . . .  	000D	WORD	PUBLIC	'DATA'
+  STACK  . . . . . . . . . . . .  	0040	PARA	STACK	'STACK'
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+ASC_TBL  . . . . . . . . . . . .  	V BYTE	0000		External
+
+CHANGED1 . . . . . . . . . . . .  	V BYTE	0000		External
+CHANGED2 . . . . . . . . . . . .  	V BYTE	0000		External
+CHANGEFORBIDDEN1 . . . . . . . .  	F PROC	002B	CP_TEXT	Length = 002A
+CHANGEFORBIDDEN2 . . . . . . . .  	F PROC	0055	CP_TEXT	Length = 0026
+CHANGE_TARGET_VALUE  . . . . . .  	F PROC	00D0	CP_TEXT	Length = 0057
+CHAR . . . . . . . . . . . . . .  	L NEAR	00A4	CP_TEXT
+CHAR_TO_SEND . . . . . . . . . .  	V BYTE	0000		External
+CHECK_NUMERIC  . . . . . . . . .  	F PROC	009E	CP_TEXT	Length = 0032
+CLEARINGALLREG1  . . . . . . . .  	F PROC	0000	CP_TEXT	Length = 002B
+CLEARINGREGS1LOOP  . . . . . . .  	L NEAR	0010	CP_TEXT
+CON2 . . . . . . . . . . . . . .  	L NEAR	01A9	CP_TEXT
+CON22  . . . . . . . . . . . . .  	L NEAR	02AC	CP_TEXT
+CON3 . . . . . . . . . . . . . .  	L NEAR	01D5	CP_TEXT
+CON33  . . . . . . . . . . . . .  	L NEAR	02D8	CP_TEXT
+CONT3  . . . . . . . . . . . . .  	L NEAR	01F0	CP_TEXT
+CONT44 . . . . . . . . . . . . .  	L NEAR	02F3	CP_TEXT
+CONTROL_POWER_UP . . . . . . . .  	F PROC	0127	CP_TEXT	Global	Length = 0214
+
+DEDUCE_P1  . . . . . . . . . . .  	L BYTE	0000	_DATA
+DEDUCE_P2  . . . . . . . . . . .  	L BYTE	0001	_DATA
+
+EXECUTE_ON_YOUR_OWN  . . . . . .  	F PROC	007B	CP_TEXT	Length = 0023
+EXECUTE_TO . . . . . . . . . . .  	V BYTE	0000		External
+EXISTS . . . . . . . . . . . . .  	L NEAR	011F	CP_TEXT
+EXIT . . . . . . . . . . . . . .  	L NEAR	0333	CP_TEXT
+
+FORBIDDEN1 . . . . . . . . . . .  	V BYTE	0000		External
+FORBIDDEN2 . . . . . . . . . . .  	V BYTE	0000		External
+
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Symbols-2
+
+
+HAHAH  . . . . . . . . . . . . .  	L NEAR	004D	CP_TEXT
+HERE . . . . . . . . . . . . . .  	L NEAR	0164	CP_TEXT
+HERE2  . . . . . . . . . . . . .  	L NEAR	016E	CP_TEXT
+HERE3  . . . . . . . . . . . . .  	L NEAR	017B	CP_TEXT
+HERE4  . . . . . . . . . . . . .  	L NEAR	0192	CP_TEXT
+HERE5  . . . . . . . . . . . . .  	L NEAR	020D	CP_TEXT
+HERE6  . . . . . . . . . . . . .  	L NEAR	0224	CP_TEXT
+HERE7  . . . . . . . . . . . . .  	L NEAR	0267	CP_TEXT
+HERE8  . . . . . . . . . . . . .  	L NEAR	027E	CP_TEXT
+HXHXHX . . . . . . . . . . . . .  	L NEAR	0073	CP_TEXT
+
+INTITIALIZATION  . . . . . . . .  	L FAR 	0000		External
+INVNUM . . . . . . . . . . . . .  	L NEAR	00CC	CP_TEXT
+
+LEVELINDICATOR . . . . . . . . .  	V BYTE	0000		External
+LINE . . . . . . . . . . . . . .  	V BYTE	0000		External
+LKL  . . . . . . . . . . . . . .  	L NEAR	024D	CP_TEXT
+LLOOP  . . . . . . . . . . . . .  	L NEAR	0107	CP_TEXT
+LOST . . . . . . . . . . . . . .  	L NEAR	0231	CP_TEXT
+LOST2  . . . . . . . . . . . . .  	L NEAR	032E	CP_TEXT
+L_1  . . . . . . . . . . . . . .  	L NEAR	008C	CP_TEXT
+L_2  . . . . . . . . . . . . . .  	L NEAR	0091	CP_TEXT
+
+MAIN . . . . . . . . . . . . . .  	F PROC	033B	CP_TEXT	Length = 0000
+MESS . . . . . . . . . . . . . .  	L BYTE	0002	_DATA
+MLOOP  . . . . . . . . . . . . .  	L NEAR	00F0	CP_TEXT
+
+NEWTARGETSTRING  . . . . . . . .  	L BYTE	0006	_DATA
+NOTIFICATION . . . . . . . . . .  	L FAR 	0000		External
+
+ONEORZERO  . . . . . . . . . . .  	V BYTE	0000		External
+
+P1 . . . . . . . . . . . . . . .  	L NEAR	0171	CP_TEXT
+P11  . . . . . . . . . . . . . .  	L NEAR	0274	CP_TEXT
+P1POINTS . . . . . . . . . . . .  	V WORD	0000		External
+P2 . . . . . . . . . . . . . . .  	L NEAR	0188	CP_TEXT
+P22  . . . . . . . . . . . . . .  	L NEAR	028B	CP_TEXT
+P2POINTS . . . . . . . . . . . .  	V WORD	0000		External
+P3 . . . . . . . . . . . . . . .  	L NEAR	019F	CP_TEXT
+P33  . . . . . . . . . . . . . .  	L NEAR	02A2	CP_TEXT
+P4 . . . . . . . . . . . . . . .  	L NEAR	0203	CP_TEXT
+P44  . . . . . . . . . . . . . .  	L NEAR	0306	CP_TEXT
+P5 . . . . . . . . . . . . . . .  	L NEAR	021A	CP_TEXT
+P55  . . . . . . . . . . . . . .  	L NEAR	031A	CP_TEXT
+PLAY1  . . . . . . . . . . . . .  	L NEAR	0142	CP_TEXT
+PLAY2  . . . . . . . . . . . . .  	L NEAR	0239	CP_TEXT
+
+RECEIVED_CHAR  . . . . . . . . .  	V BYTE	0000		External
+RECEIVE_CHAR . . . . . . . . . .  	L FAR 	0000		External
+REGS_PLAYER1 . . . . . . . . . .  	V BYTE	0000		External
+REGS_PLAYER2 . . . . . . . . . .  	V BYTE	0000		External
+
+SEND_CHAR  . . . . . . . . . . .  	L FAR 	0000		External
+STUCK  . . . . . . . . . . . . .  	V BYTE	0000		External
+Microsoft (R) Macro Assembler Version 5.00                  1/10/22 08:21:35
+                                                             Symbols-3
+
+
+
+TARGET_VALUE . . . . . . . . . .  	V WORD	0000		External
+TURN . . . . . . . . . . . . . .  	V BYTE	0000		External
+
+WINNING  . . . . . . . . . . . .  	V BYTE	0000		External
+
+XX . . . . . . . . . . . . . . .  	L NEAR	015D	CP_TEXT
+XXX  . . . . . . . . . . . . . .  	L NEAR	0260	CP_TEXT
+XXXX . . . . . . . . . . . . . .  	L NEAR	0271	CP_TEXT
+XXXXX  . . . . . . . . . . . . .  	L NEAR	0295	CP_TEXT
+
+@CODE  . . . . . . . . . . . . .  	TEXT  cp_TEXT		
+@CODESIZE  . . . . . . . . . . .  	TEXT  1		
+@DATASIZE  . . . . . . . . . . .  	TEXT  1		
+@FILENAME  . . . . . . . . . . .  	TEXT  cp		
+_EXIT_ . . . . . . . . . . . . .  	L NEAR	0093	CP_TEXT
+
+
+    447 Source  Lines
+    573 Total   Lines
+     99 Symbols
+
+  50938 + 449222 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
